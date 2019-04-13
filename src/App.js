@@ -1,8 +1,8 @@
 import React, { Component } from "react";
-import Axios from "axios";
 import AllResults from "./components/AllResults";
 import SingleResult from "./components/SingleResult";
 import FacebookLoading from 'react-facebook-loading';
+import Axios from "./services/Axios";
 import 'react-facebook-loading/dist/react-facebook-loading.css';
 
 const apiKey ='sYkovQcCNOGAnLuiCTEZrQ';// Create .env file and store in environment variable
@@ -23,26 +23,51 @@ class App extends Component {
     });
   };
 
-  onSearchBookClick = () => {
-    this.setState({fetchingData: true});
+  onSearchBookClick=()=>{   
+    this.fetchAllRecords("");
+  }  
+
+  fetchAllRecords = async test => {
+    this.setState({ fetchingData: true });
     const { searchText } = this.state;
-    const requestUri = `https://cors-anywhere.herokuapp.com/https://www.goodreads.com/search/index.xml?key=${apiKey}&q=${searchText}`;
-
-    Axios.get(requestUri)
-      .then(res => {
-        this.parseXMLResponse(res.data);
-      })
-      .catch(error => {
-        this.setState({
-          error: error.toString(),
-          fetchingData: false
-        });
+    try {
+    
+      const result= await  Axios.allRecords(searchText);     
+      this.parseXMLResponse(result);
+    
+    }
+    catch (error) {
+      this.setState({
+        error: error.toString(),
+        fetchingData: false
       });
+    }
+    this.setState({ showAllData: true });
+  }; 
 
-      this.setState({showAllData:true});
-  };
+  getSingleBook=id=>{
+    this.fetchSingleRecord(id);   
+  }
 
- 
+  fetchSingleRecord = async id => {
+    try {
+      this.setState({ fetchingData: true });
+      const result = await Axios.singleRecord(id);
+      this.setState({ showAllData: false });
+      this.parseXMLResponse(result);
+    }
+    catch (error) {
+      this.setState({
+        error: error.toString(),
+        fetchingData: false
+      });
+    }
+  }
+
+  resetView=()=>{
+    this.setState({showAllData: true });
+  }
+
   parseXMLResponse = response => {
     const parser = new DOMParser();
     const XMLResponse = parser.parseFromString(response, "application/xml");
@@ -72,7 +97,6 @@ class App extends Component {
     }
   };
 
-
   XMLToJson = XML => {
     const allNodes = new Array(...XML.children);
     const jsonResult = {};
@@ -85,26 +109,6 @@ class App extends Component {
     });
     return jsonResult;
   };
-
-  getSingleBook=id=>{
-    this.setState({fetchingData: true});
-    const requestUri =`https://cors-anywhere.herokuapp.com/https://www.goodreads.com/book/show/${id}?key=${apiKey}`;      
-    Axios.get(requestUri)
-      .then(res => {
-        this.setState({showAllData: false });      
-        this.parseXMLResponse(res.data);
-      })
-      .catch(error => {    
-        this.setState({
-          error: error.toString(),
-          fetchingData: false
-        });      
-      });    
-  }
-
-  resetView=()=>{
-    this.setState({showAllData: true });
-  }
 
   render() {
     return (
@@ -123,7 +127,7 @@ class App extends Component {
               value={this.state.searchText}
             />
             <button
-              className="col-sm-2 btn btn-primary"
+              className="col-sm-2 btn btn-primary search"
               onClick={this.onSearchBookClick}
             >
               Search

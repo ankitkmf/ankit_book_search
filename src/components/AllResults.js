@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 
 const AllResults = ({ books,getSingleBook }) => {
   return (
-    <div className="row">
+    <div className="row allResult">
       {books.map(book => (
         <SearchResult bookData={book} key={book.id} getSingleBook={getSingleBook} />
       ))}
